@@ -38,7 +38,16 @@ def get_Roles_With_No_Permission_Boundary(event):
         for role in roles:
             if 'CreateDate' in role:
                 role['CreateDate'] = role['CreateDate'].isoformat()
-        
+                
+        # Verifier chaque role si il a un PB 
+        roles_without_PB=[]   
+        for role in roles :
+            if 'PermissionsBoundary' not in role:
+                roles_without_PB.append({
+                        'RoleName': role['RoleName'],
+                        'RoleArn': role['Arn']
+                    })
+                        
 
         logger.info("Roles retrieved successfully")
         
@@ -50,11 +59,11 @@ def get_Roles_With_No_Permission_Boundary(event):
         
         bucket_name = 'emi-artifacts'
         object_key = 'roles_without_permissions_boundary1.json'
-        res={"roles": roles}
+        res={"roles": roles_without_PB}
         summary_json = json.dumps(res, indent=4)
         s3.put_object(Body=summary_json, Bucket=bucket_name, Key=object_key)
         url = generate_presigned_url(bucket_name,object_key)
-        resultat = {"url":url ,"roles":roles}
+        resultat = {"url":url ,"roles":roles_without_PB}
         publish_to_sns(url,event)
         
     
